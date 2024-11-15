@@ -206,14 +206,18 @@ func (c iceportalClient) outputBuilder() string {
 	trainName := fmt.Sprintf("%s%s", c.trip.Trip.TrainType, c.trip.Trip.Vzn)
 	series := fmt.Sprintf("Series %s / %s", c.status.Series, c.status.Tzn)
 	speed := fmt.Sprintf("%.0f km/h", c.status.Speed)
-	stops := c.getStops()
+	stops, delayReasons := c.getStops()
 	nextStopString := stops[0]
 	re := regexp.MustCompile(`^(.*)(at [0-9]{2}:[0-9]{2})(\ -\ [0-9]{2}:[0-9]{2})$`)
 	sub := fmt.Sprintf("${1} in %s ${2}", c.calculateArrival())
 	nextStop := re.ReplaceAllString(nextStopString, sub)
 	wifi := c.getWifiStatus()
-
-	return fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stops, "\n"), wifi)
+	delayReason := strings.Join(delayReasons, "\n")
+	if len(delayReason) == 0 {
+		return fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stops, "\n"), wifi)
+	} else {
+		return fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s\n**Delay Reasons:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stops, "\n"), wifi, delayReason)
+	}
 }
 
 func (c iceportalClient) getWifiStatus() string {
@@ -224,8 +228,9 @@ func (c iceportalClient) getWifiStatus() string {
 	return fmt.Sprintf("Quality: %s\nChanges to %s in %s", wifiCurrentStatus, wifiNextStatus, wifiRemainingString)
 }
 
-func (c iceportalClient) getStops() []string {
+func (c iceportalClient) getStops() ([]string, []string) {
 	var stopsSlice []string
+	var delayResons []string
 
 	currentNextStop := c.trip.Trip.StopInfo.ActualNext
 	var stopStationName, arrivalActual, ArrivalDelay, ArrivalDelayRaw, departureActual, departureDelay, departureDelayRaw, departureScheduled, track string
@@ -275,8 +280,12 @@ func (c iceportalClient) getStops() []string {
 		departureDelayRaw = ""
 		ArrivalDelay = ""
 		departureDelay = ""
+		switch stop.DelayReasons.(type) {
+		case string:
+			delayResons = append(delayResons, stop.DelayReasons.(string))
+		}
 	}
-	return stopsSlice
+	return stopsSlice, delayResons
 }
 
 func (c iceportalClient) detectWiFi() bool {
