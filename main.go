@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -164,10 +165,15 @@ func (c iceportalClient) outputBuilder() string {
 
 func (c iceportalClient) getWifiStatus() string {
 	wifiCurrentStatus := strings.ToLower(c.status.Connectivity.CurrentState)
-	wifiStatusRemainingSeconds := c.status.Connectivity.RemainingTimeSeconds
-	wifiRemainingString := fmt.Sprintf("%d:%d", (wifiStatusRemainingSeconds-(wifiStatusRemainingSeconds%60))/60, wifiStatusRemainingSeconds-(wifiStatusRemainingSeconds-(wifiStatusRemainingSeconds%60))/60*60)
 	wifiNextStatus := strings.ToLower(c.status.Connectivity.NextState)
-	return fmt.Sprintf("Quality: %s\nChanges to %s in %s", wifiCurrentStatus, wifiNextStatus, wifiRemainingString)
+	wifiStatusRemainingSecondsRawStr := c.status.Connectivity.RemainingTimeSeconds
+	wifiStatusRemainingSecondsRaw := strconv.Itoa(wifiStatusRemainingSecondsRawStr)
+	wifiRemainingString, err := time.ParseDuration(wifiStatusRemainingSecondsRaw + "s")
+	if err != nil {
+		return fmt.Sprintf("Quality: %s\nChanges to %s", wifiCurrentStatus, wifiNextStatus)
+	} else {
+		return fmt.Sprintf("Quality: %s\nChanges to %s in %s", wifiCurrentStatus, wifiNextStatus, wifiRemainingString)
+	}
 }
 
 func (c iceportalClient) getStops() ([]string, []string) {
