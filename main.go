@@ -39,24 +39,16 @@ func main() {
 		fmt.Println("")
 		os.Exit(0)
 	}
-	err := c.iceportalTryLogin()
-	if err != nil {
-		panic(err.Error())
-	}
-	if !c.loggedin {
-		c.iceportalLogin()
-	}
 	c.getStatus()
 	c.getTrip()
 	fmt.Println(c.outputBuilder())
 }
 
 type iceportalClient struct {
-	client   *http.Client
-	status   ApiStatus
-	trip     ApiTrip
-	loggedin bool
-	local    bool
+	client *http.Client
+	status ApiStatus
+	trip   ApiTrip
+	local  bool
 }
 
 func newClient(local bool) iceportalClient {
@@ -68,56 +60,6 @@ func newClient(local bool) iceportalClient {
 		Jar: jar,
 	}
 	return iceportalClient{client: client, local: local}
-}
-
-func (c *iceportalClient) iceportalTryLogin() error {
-	if c.local {
-		return nil
-	}
-	req, err := http.NewRequest(http.MethodGet, iceportalLoginCheckUrl, nil)
-	if err != nil {
-		return err
-	}
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	var loginResponse iceportalLoginResponse
-	if err = json.Unmarshal(body, &loginResponse); err != nil {
-		return err
-	}
-	if loginResponse.Result.Authenticated == "1" {
-		c.loggedin = true
-		return nil
-	}
-	return nil
-}
-
-func (c *iceportalClient) iceportalLogin() error {
-	if c.local {
-		return nil
-	}
-	req, err := http.NewRequest(http.MethodPost, iceportalLoginUrl, nil)
-	if err != nil {
-		return err
-	}
-	resp, err := c.client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("login unsuccessful")
-	}
-	c.loggedin = true
-	return nil
 }
 
 func (c *iceportalClient) getStatus() error {
@@ -389,10 +331,4 @@ type ApiTrip struct {
 		Mobility interface{} `json:"mobility"`
 	} `json:"selectedRoute"`
 	Active interface{} `json:"active"`
-}
-
-type iceportalLoginResponse struct {
-	Result struct {
-		Authenticated string `json:"authenticated"`
-	} `json:"result"`
 }
