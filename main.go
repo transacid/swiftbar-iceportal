@@ -28,9 +28,11 @@ import (
 // set true when testing local against files
 var local = false
 
-var dbWiFis []string = []string{"WIFI@DB", "WIFIonICE"}
-var iceportalStatusURL = "https://iceportal.de/api1/rs/status"
-var iceportalTripURL = "https://iceportal.de/api1/rs/tripInfo/trip"
+var (
+	dbWiFis            []string = []string{"WIFI@DB", "WIFIonICE"}
+	iceportalStatusURL          = "https://iceportal.de/api1/rs/status"
+	iceportalTripURL            = "https://iceportal.de/api1/rs/tripInfo/trip"
+)
 
 // var iceportalLoginCheckUrl = "https://login.wifionice.de/cna/wifi/user_info"
 // var iceportalLoginUrl = "https://login.wifionice.de/cna/logon"
