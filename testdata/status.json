@@ -2,21 +2,23 @@
     "connection": true,
     "serviceLevel": "AVAILABLE_SERVICE",
     "gpsStatus": "VALID",
-    "internet": "HIGH",
-    "latitude": 52.584694666666664,
-    "longitude": 12.992859,
-    "tileY": 287,
-    "tileX": 242,
-    "series": "411",
-    "serverTime": 1630411375594,
-    "speed": 194.0,
+    "internet": "WEAK",
+    "latitude": 53.3677676667,
+    "longitude": 11.4244658333,
+    "tileY": 374,
+    "tileX": 130,
+    "series": "412",
+    "serverTime": 1784306947051,
+    "speed": 138.5,
     "trainType": "ICE",
-    "tzn": "Tz1177",
-    "wagonClass": "SECOND",
+    "tzn": "ICE9017",
+    "vzn": 506,
+    "launchTime": "2026-07-17T12:48:00",
+    "wagonClass": "FIRST",
+    "ecmVersion": "2026-07-16T21:35:52",
     "connectivity": {
-        "currentState": "HIGH",
-        "nextState": "WEAK",
-        "remainingTimeSeconds": 797
-    },
-    "bapInstalled": true
+        "currentState": "UNSTABLE",
+        "nextState": "MIDDLE",
+        "remainingTimeSeconds": 600
+    }
 }
