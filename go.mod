@@ -1,5 +1,5 @@
 module iceportal
 
-go 1.23.3
+go 1.26
 
-require golang.org/x/net v0.31.0
+require golang.org/x/net v0.57.0
