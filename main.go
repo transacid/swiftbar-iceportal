@@ -297,23 +297,23 @@ type APITrip struct {
 		} `json:"stopInfo"`
 		Stops []struct {
 			Station struct {
-				EvaNr          string      `json:"evaNr"`
-				Name           string      `json:"name"`
-				Code           interface{} `json:"code"`
+				EvaNr          string `json:"evaNr"`
+				Name           string `json:"name"`
+				Code           any    `json:"code"`
 				Geocoordinates struct {
 					Latitude  float64 `json:"latitude"`
 					Longitude float64 `json:"longitude"`
 				} `json:"geocoordinates"`
 			} `json:"station"`
 			Timetable struct {
-				ScheduledArrivalTime    interface{} `json:"scheduledArrivalTime"`
-				ActualArrivalTime       interface{} `json:"actualArrivalTime"`
-				ShowActualArrivalTime   interface{} `json:"showActualArrivalTime"`
-				ArrivalDelay            string      `json:"arrivalDelay"`
-				ScheduledDepartureTime  interface{} `json:"scheduledDepartureTime"`
-				ActualDepartureTime     interface{} `json:"actualDepartureTime"`
-				ShowActualDepartureTime bool        `json:"showActualDepartureTime"`
-				DepartureDelay          string      `json:"departureDelay"`
+				ScheduledArrivalTime    any    `json:"scheduledArrivalTime"`
+				ActualArrivalTime       any    `json:"actualArrivalTime"`
+				ShowActualArrivalTime   any    `json:"showActualArrivalTime"`
+				ArrivalDelay            string `json:"arrivalDelay"`
+				ScheduledDepartureTime  any    `json:"scheduledDepartureTime"`
+				ActualDepartureTime     any    `json:"actualDepartureTime"`
+				ShowActualDepartureTime bool   `json:"showActualDepartureTime"`
+				DepartureDelay          string `json:"departureDelay"`
 			} `json:"timetable"`
 			Track struct {
 				Scheduled string `json:"scheduled"`
@@ -326,16 +326,16 @@ type APITrip struct {
 				Distance          int    `json:"distance"`
 				DistanceFromStart int    `json:"distanceFromStart"`
 			} `json:"info"`
-			DelayReasons interface{} `json:"delayReasons"`
+			DelayReasons any `json:"delayReasons"`
 		} `json:"stops"`
 	} `json:"trip"`
-	Connection    interface{} `json:"connection"`
+	Connection    any `json:"connection"`
 	SelectedRoute struct {
 		ConflictInfo struct {
-			Status string      `json:"status"`
-			Text   interface{} `json:"text"`
+			Status string `json:"status"`
+			Text   any    `json:"text"`
 		} `json:"conflictInfo"`
-		Mobility interface{} `json:"mobility"`
+		Mobility any `json:"mobility"`
 	} `json:"selectedRoute"`
-	Active interface{} `json:"active"`
+	Active any `json:"active"`
 }
