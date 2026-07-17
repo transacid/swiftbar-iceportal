@@ -68,7 +68,7 @@ func (c *iceportalClient) getStatus() error {
 	var body []byte
 	if c.local {
 		var err error
-		body, err = os.ReadFile("/Users/transacid/testdata/status.json")
+		body, err = os.ReadFile("testdata/status.json")
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func (c *iceportalClient) getTrip() error {
 	var body []byte
 	if c.local {
 		var err error
-		body, err = os.ReadFile("/Users/transacid/testdata/trip.json")
+		body, err = os.ReadFile("testdata/trip.json")
 		if err != nil {
 			return err
 		}
