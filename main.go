@@ -29,10 +29,11 @@ import (
 var local = false
 
 var dbWiFis []string = []string{"WIFI@DB", "WIFIonICE"}
-var iceportalStatusUrl = "https://iceportal.de/api1/rs/status"
-var iceportalTripUrl = "https://iceportal.de/api1/rs/tripInfo/trip"
-var iceportalLoginCheckUrl = "https://login.wifionice.de/cna/wifi/user_info"
-var iceportalLoginUrl = "https://login.wifionice.de/cna/logon"
+var iceportalStatusURL = "https://iceportal.de/api1/rs/status"
+var iceportalTripURL = "https://iceportal.de/api1/rs/tripInfo/trip"
+
+// var iceportalLoginCheckUrl = "https://login.wifionice.de/cna/wifi/user_info"
+// var iceportalLoginUrl = "https://login.wifionice.de/cna/logon"
 
 func main() {
 	c := newClient(local)
@@ -47,8 +48,8 @@ func main() {
 
 type iceportalClient struct {
 	client *http.Client
-	status ApiStatus
-	trip   ApiTrip
+	status APIStatus
+	trip   APITrip
 	local  bool
 }
 
@@ -72,7 +73,7 @@ func (c *iceportalClient) getStatus() error {
 			return err
 		}
 	} else {
-		req, err := http.NewRequest(http.MethodGet, iceportalStatusUrl, nil)
+		req, err := http.NewRequest(http.MethodGet, iceportalStatusURL, nil)
 		if err != nil {
 			return err
 		}
@@ -104,7 +105,7 @@ func (c *iceportalClient) getTrip() error {
 			return err
 		}
 	} else {
-		req, err := http.NewRequest(http.MethodGet, iceportalTripUrl, nil)
+		req, err := http.NewRequest(http.MethodGet, iceportalTripURL, nil)
 		if err != nil {
 			return err
 		}
@@ -255,7 +256,7 @@ func (c iceportalClient) detectWiFi() bool {
 	return false
 }
 
-type ApiStatus struct {
+type APIStatus struct {
 	Connection   bool    `json:"connection"`
 	ServiceLevel string  `json:"serviceLevel"`
 	GpsStatus    string  `json:"gpsStatus"`
@@ -278,7 +279,7 @@ type ApiStatus struct {
 	BapInstalled bool `json:"bapInstalled"`
 }
 
-type ApiTrip struct {
+type APITrip struct {
 	Trip struct {
 		TripDate             string `json:"tripDate"`
 		TrainType            string `json:"trainType"`
