@@ -246,6 +246,9 @@ func (c iceportalClient) detectWiFi() bool {
 	for _, wifi := range dbWiFis {
 		if wifi == strings.TrimSpace(out.String()) {
 			return true
+		} else if strings.TrimSpace(out.String()) == "<redacted>" {
+			fmt.Println(`Please run "sudo ipconfig setverbose 1".`)
+			return false
 		}
 	}
 	return false
