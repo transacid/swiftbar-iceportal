@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 	"time"
 )
 
@@ -22,7 +24,7 @@ import (
 // <bitbar.abouturl>https://github.com/transacid/sunbar</bitbar.abouturl>
 
 // set true when testing local against files
-var local = false
+var local = true
 
 var (
 	dbWiFis            []string = []string{"WIFI@DB", "WIFIonICE"}
@@ -80,7 +82,7 @@ func (c *iceportalClient) fetch(localPath, url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	return io.ReadAll(resp.Body)
 }
@@ -115,15 +117,15 @@ func (c iceportalClient) outputBuilder() string {
 	series := fmt.Sprintf("Series %s / %s", c.status.Series, c.status.Tzn)
 	speed := fmt.Sprintf("%.0f km/h", c.status.Speed)
 
-	var stopLines, delayReasons []string
+	var delayReasons []string
 	for _, s := range stops {
-		stopLines = append(stopLines, s.line())
 		if s.DelayReason != "" {
 			delayReasons = append(delayReasons, s.DelayReason)
 		}
 	}
+	stopLines := formatStopLines(stops)
 
-	nextStop := stops[0].line()
+	nextStop := formatStopLines(stops[:1])[0]
 	if arrival := c.calculateArrival(); arrival != "" {
 		nextStop = fmt.Sprintf("%s in %s", nextStop, arrival)
 	}
@@ -149,12 +151,23 @@ func (c iceportalClient) getWifiStatus() string {
 	return out
 }
 
-func (s Stop) line() string {
-	out := fmt.Sprintf("%s [%s] at %s%s", s.Name, s.Track, s.ArrivalTime, s.ArrivalDelay)
-	if s.DepartureTime != "" {
-		out += fmt.Sprintf(" - %s%s", s.DepartureTime, s.DepartureDelay)
+func formatStopLines(stops []Stop) []string {
+	var buf bytes.Buffer
+	tw := tabwriter.NewWriter(&buf, 0, 4, 1, ' ', 0)
+	for _, s := range stops {
+		departure := ""
+		if s.DepartureTime != "" {
+			departure = fmt.Sprintf("- %s%s", s.DepartureTime, s.DepartureDelay)
+		}
+		fmt.Fprintf(tw, "%s\t[%s]\tat %s%s\t%s\n", s.Name, s.Track, s.ArrivalTime, s.ArrivalDelay, departure) //nolint:errcheck
 	}
-	return out
+	tw.Flush() //nolint:errcheck
+
+	lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
+	for i := range lines {
+		lines[i] = strings.TrimRight(lines[i], " ")
+	}
+	return lines
 }
 
 func (c iceportalClient) getStops() []Stop {
