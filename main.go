@@ -164,7 +164,7 @@ func (c iceportalClient) getStops() ([]string, []string) {
 			arrivalActual = "Unkmown"
 			if isCurrentStop {
 				if stop.Timetable.ActualDepartureTime != nil {
-					arrivalActual = time.UnixMilli(int64(stop.Timetable.ScheduledArrivalTime.(float64))).Local().Format("15:04")
+					arrivalActual = time.UnixMilli(int64(stop.Timetable.ActualDepartureTime.(float64))).Local().Format("15:04")
 				} else if stop.Timetable.ScheduledDepartureTime != nil {
 					arrivalActual = time.UnixMilli(int64(stop.Timetable.ScheduledDepartureTime.(float64))).Local().Format("15:04")
 				}
