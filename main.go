@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
-
-	"golang.org/x/net/publicsuffix"
 )
 
 // <bitbar.title>IcePortal</bitbar.title>
@@ -33,9 +30,6 @@ var (
 	iceportalTripURL            = "https://iceportal.de/api1/rs/tripInfo/trip"
 )
 
-// var iceportalLoginCheckUrl = "https://login.wifionice.de/cna/wifi/user_info"
-// var iceportalLoginUrl = "https://login.wifionice.de/cna/logon"
-
 func main() {
 	c := newClient(local)
 	if !c.detectWiFi() {
@@ -48,14 +42,7 @@ func main() {
 }
 
 func newClient(local bool) iceportalClient {
-	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	if err != nil {
-		panic(err)
-	}
-	client := &http.Client{
-		Jar: jar,
-	}
-	return iceportalClient{client: client, local: local}
+	return iceportalClient{client: &http.Client{}, local: local}
 }
 
 func (c *iceportalClient) getStatus() error {
