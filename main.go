@@ -183,18 +183,18 @@ func (c iceportalClient) getStops() []Stop {
 		}
 
 		if arrivalDelayRaw := stop.Timetable.ArrivalDelay; arrivalDelayRaw != "" {
-			s.ArrivalDelay = fmt.Sprintf(" (%s) ", arrivalDelayRaw)
+			s.ArrivalDelay = fmt.Sprintf("(%s)", arrivalDelayRaw)
 		}
 
 		if stop.Timetable.ActualDepartureTime != nil {
 			s.DepartureTime = time.UnixMilli(int64(stop.Timetable.ActualDepartureTime.(float64))).Local().Format("15:04")
 			if departureDelayRaw := stop.Timetable.DepartureDelay; departureDelayRaw != "" {
-				s.DepartureDelay = fmt.Sprintf(" (%s) ", departureDelayRaw)
+				s.DepartureDelay = fmt.Sprintf("(%s)", departureDelayRaw)
 			}
 		} else if stop.Timetable.ScheduledDepartureTime != nil {
 			s.DepartureTime = time.UnixMilli(int64(stop.Timetable.ScheduledDepartureTime.(float64))).Local().Format("15:04")
 			if departureDelayRaw := stop.Timetable.DepartureDelay; departureDelayRaw != "" {
-				s.DepartureDelay = fmt.Sprintf(" (%s) ", departureDelayRaw)
+				s.DepartureDelay = fmt.Sprintf("(%s)", departureDelayRaw)
 			}
 		}
 
