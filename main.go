@@ -36,8 +36,14 @@ func main() {
 		fmt.Println("")
 		os.Exit(0)
 	}
-	c.getStatus()
-	c.getTrip()
+	if err := c.getStatus(); err != nil {
+		fmt.Println("Error fetching status:", err)
+		os.Exit(0)
+	}
+	if err := c.getTrip(); err != nil {
+		fmt.Println("Error fetching trip:", err)
+		os.Exit(0)
+	}
 	fmt.Println(c.outputBuilder())
 }
 
@@ -141,18 +147,6 @@ func (c iceportalClient) getWifiStatus() string {
 		out += fmt.Sprintf(" in %s", wifiRemainingString)
 	}
 	return out
-}
-
-// Stop is a single stop on the trip, holding parsed/formatted display
-// fields so getStops() stays free of presentation concerns beyond this.
-type Stop struct {
-	Name           string
-	Track          string
-	ArrivalTime    string
-	ArrivalDelay   string
-	DepartureTime  string
-	DepartureDelay string
-	DelayReason    string
 }
 
 func (s Stop) line() string {

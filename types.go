@@ -9,6 +9,18 @@ type iceportalClient struct {
 	local  bool
 }
 
+// Stop is a single stop on the trip, holding parsed/formatted display
+// fields so getStops() stays free of presentation concerns beyond this.
+type Stop struct {
+	Name           string
+	Track          string
+	ArrivalTime    string
+	ArrivalDelay   string
+	DepartureTime  string
+	DepartureDelay string
+	DelayReason    string
+}
+
 type APIStatus struct {
 	Connection   bool    `json:"connection"`
 	ServiceLevel string  `json:"serviceLevel"`
