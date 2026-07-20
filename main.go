@@ -95,13 +95,13 @@ func (c *iceportalClient) fetch(localPath, url string) ([]byte, error) {
 
 func (c iceportalClient) calculateArrival() string {
 	currentNextStop := c.trip.Trip.StopInfo.ActualNext
-	var arivelTime time.Time
 	for _, stop := range c.trip.Trip.Stops {
-		if stop.Station.EvaNr == currentNextStop {
-			arivelTime = time.UnixMilli(int64(stop.Timetable.ActualArrivalTime.(float64))).Local()
+		if stop.Station.EvaNr == currentNextStop && stop.Timetable.ActualArrivalTime != nil {
+			arrivalTime := time.UnixMilli(int64(stop.Timetable.ActualArrivalTime.(float64))).Local()
+			return time.Until(arrivalTime).Round(time.Minute).String()
 		}
 	}
-	return time.Until(arivelTime).Round(time.Minute).String()
+	return ""
 }
 
 func (c iceportalClient) outputBuilder() string {
@@ -125,10 +125,12 @@ func (c iceportalClient) outputBuilder() string {
 	if len(stops) == 0 {
 		return "No trip data available"
 	}
-	nextStopString := stops[0]
-	re := regexp.MustCompile(`^(.*)(at [0-9]{2}:[0-9]{2})(\ -\ [0-9]{2}:[0-9]{2})$`)
-	sub := fmt.Sprintf("${1} in %s ${2}", c.calculateArrival())
-	nextStop := re.ReplaceAllString(nextStopString, sub)
+	nextStop := stops[0]
+	if arrival := c.calculateArrival(); arrival != "" {
+		re := regexp.MustCompile(`^(.*)(at [0-9]{2}:[0-9]{2})(\ -\ [0-9]{2}:[0-9]{2})$`)
+		sub := fmt.Sprintf("${1} in %s ${2}", arrival)
+		nextStop = re.ReplaceAllString(nextStop, sub)
+	}
 	wifi := c.getWifiStatus()
 	delayReason := strings.Join(delayReasons, "\n")
 	out := fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stops, "\n"), wifi)
@@ -143,12 +145,11 @@ func (c iceportalClient) getWifiStatus() string {
 	wifiNextStatus := strings.ToLower(c.status.Connectivity.NextState)
 	wifiStatusRemainingSecondsRawStr := c.status.Connectivity.RemainingTimeSeconds
 	wifiStatusRemainingSecondsRaw := strconv.Itoa(wifiStatusRemainingSecondsRawStr)
-	wifiRemainingString, err := time.ParseDuration(wifiStatusRemainingSecondsRaw + "s")
-	if err != nil {
-		return fmt.Sprintf("Quality: %s\nChanges to %s", wifiCurrentStatus, wifiNextStatus)
-	} else {
-		return fmt.Sprintf("Quality: %s\nChanges to %s in %s", wifiCurrentStatus, wifiNextStatus, wifiRemainingString)
+	out := fmt.Sprintf("Quality: %s\nChanges to %s", wifiCurrentStatus, wifiNextStatus)
+	if wifiRemainingString, err := time.ParseDuration(wifiStatusRemainingSecondsRaw + "s"); err == nil {
+		out += fmt.Sprintf(" in %s", wifiRemainingString)
 	}
+	return out
 }
 
 func (c iceportalClient) getStops() ([]string, []string) {
