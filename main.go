@@ -8,7 +8,6 @@ import (
 	"net/http/cookiejar"
 	"os"
 	"os/exec"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -105,7 +104,8 @@ func (c iceportalClient) calculateArrival() string {
 }
 
 func (c iceportalClient) outputBuilder() string {
-	if len(c.trip.Trip.Stops) == 0 {
+	stops := c.getStops()
+	if len(stops) == 0 {
 		return "No trip data available"
 	}
 
@@ -121,19 +121,23 @@ func (c iceportalClient) outputBuilder() string {
 	trainName := fmt.Sprintf("%s%s", c.trip.Trip.TrainType, c.trip.Trip.Vzn)
 	series := fmt.Sprintf("Series %s / %s", c.status.Series, c.status.Tzn)
 	speed := fmt.Sprintf("%.0f km/h", c.status.Speed)
-	stops, delayReasons := c.getStops()
-	if len(stops) == 0 {
-		return "No trip data available"
+
+	var stopLines, delayReasons []string
+	for _, s := range stops {
+		stopLines = append(stopLines, s.line())
+		if s.DelayReason != "" {
+			delayReasons = append(delayReasons, s.DelayReason)
+		}
 	}
-	nextStop := stops[0]
+
+	nextStop := stops[0].line()
 	if arrival := c.calculateArrival(); arrival != "" {
-		re := regexp.MustCompile(`^(.*)(at [0-9]{2}:[0-9]{2})(\ -\ [0-9]{2}:[0-9]{2})$`)
-		sub := fmt.Sprintf("${1} in %s ${2}", arrival)
-		nextStop = re.ReplaceAllString(nextStop, sub)
+		nextStop = fmt.Sprintf("%s in %s", nextStop, arrival)
 	}
+
 	wifi := c.getWifiStatus()
 	delayReason := strings.Join(delayReasons, "\n")
-	out := fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stops, "\n"), wifi)
+	out := fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stopLines, "\n"), wifi)
 	if delayReason != "" {
 		out += fmt.Sprintf("\n**Delay Reasons:**|md=true\n%s", delayReason)
 	}
@@ -152,9 +156,24 @@ func (c iceportalClient) getWifiStatus() string {
 	return out
 }
 
-func (c iceportalClient) getStops() ([]string, []string) {
-	var stopsSlice []string
-	var delayResons []string
+// Stop is a single stop on the trip, holding parsed/formatted display
+// fields so getStops() stays free of presentation concerns beyond this.
+type Stop struct {
+	Name           string
+	Track          string
+	ArrivalTime    string
+	ArrivalDelay   string
+	DepartureTime  string
+	DepartureDelay string
+	DelayReason    string
+}
+
+func (s Stop) line() string {
+	return fmt.Sprintf("%s (%s) at %s%s - %s%s", s.Name, s.Track, s.ArrivalTime, s.ArrivalDelay, s.DepartureTime, s.DepartureDelay)
+}
+
+func (c iceportalClient) getStops() []Stop {
+	var stops []Stop
 
 	currentNextStop := c.trip.Trip.StopInfo.ActualNext
 	for _, stop := range c.trip.Trip.Stops {
@@ -162,52 +181,49 @@ func (c iceportalClient) getStops() ([]string, []string) {
 			continue
 		}
 		isCurrentStop := stop.Station.EvaNr == currentNextStop
-		stopStationName := stop.Station.Name
-		var arrivalActual string
+		s := Stop{
+			Name:  stop.Station.Name,
+			Track: stop.Track.Actual,
+		}
+
 		if stop.Timetable.ActualArrivalTime != nil {
-			arrivalActual = time.UnixMilli(int64(stop.Timetable.ActualArrivalTime.(float64))).Local().Format("15:04")
+			s.ArrivalTime = time.UnixMilli(int64(stop.Timetable.ActualArrivalTime.(float64))).Local().Format("15:04")
 		} else if stop.Timetable.ScheduledArrivalTime != nil {
-			arrivalActual = time.UnixMilli(int64(stop.Timetable.ScheduledArrivalTime.(float64))).Local().Format("15:04")
+			s.ArrivalTime = time.UnixMilli(int64(stop.Timetable.ScheduledArrivalTime.(float64))).Local().Format("15:04")
 		} else {
-			arrivalActual = "Unkmown"
+			s.ArrivalTime = "Unknown"
 			if isCurrentStop {
 				if stop.Timetable.ActualDepartureTime != nil {
-					arrivalActual = time.UnixMilli(int64(stop.Timetable.ActualDepartureTime.(float64))).Local().Format("15:04")
+					s.ArrivalTime = time.UnixMilli(int64(stop.Timetable.ActualDepartureTime.(float64))).Local().Format("15:04")
 				} else if stop.Timetable.ScheduledDepartureTime != nil {
-					arrivalActual = time.UnixMilli(int64(stop.Timetable.ScheduledDepartureTime.(float64))).Local().Format("15:04")
+					s.ArrivalTime = time.UnixMilli(int64(stop.Timetable.ScheduledDepartureTime.(float64))).Local().Format("15:04")
 				}
 			}
 		}
 
-		var arrivalDelay string
-		arrivalDelayRaw := stop.Timetable.ArrivalDelay
-		if arrivalDelayRaw != "" {
-			arrivalDelay = fmt.Sprintf(" (%s) ", stop.Timetable.ArrivalDelay)
+		if arrivalDelayRaw := stop.Timetable.ArrivalDelay; arrivalDelayRaw != "" {
+			s.ArrivalDelay = fmt.Sprintf(" (%s) ", arrivalDelayRaw)
 		}
-		var departureActual, departureDelay string
+
 		if stop.Timetable.ActualDepartureTime != nil {
-			departureActual = time.UnixMilli(int64(stop.Timetable.ActualDepartureTime.(float64))).Local().Format("15:04")
-			departureDelayRaw := stop.Timetable.DepartureDelay
-			if departureDelayRaw != "" {
-				departureDelay = fmt.Sprintf(" (%s) ", stop.Timetable.DepartureDelay)
+			s.DepartureTime = time.UnixMilli(int64(stop.Timetable.ActualDepartureTime.(float64))).Local().Format("15:04")
+			if departureDelayRaw := stop.Timetable.DepartureDelay; departureDelayRaw != "" {
+				s.DepartureDelay = fmt.Sprintf(" (%s) ", departureDelayRaw)
 			}
 		} else if stop.Timetable.ScheduledDepartureTime != nil {
-			departureScheduled := time.UnixMilli(int64(stop.Timetable.ScheduledDepartureTime.(float64))).Local().Format("15:04")
-			departureDelayRaw := stop.Timetable.DepartureDelay
-			if departureDelayRaw != "" {
-				departureDelay = fmt.Sprintf(" (%s) ", stop.Timetable.DepartureDelay)
+			s.DepartureTime = time.UnixMilli(int64(stop.Timetable.ScheduledDepartureTime.(float64))).Local().Format("15:04")
+			if departureDelayRaw := stop.Timetable.DepartureDelay; departureDelayRaw != "" {
+				s.DepartureDelay = fmt.Sprintf(" (%s) ", departureDelayRaw)
 			}
-			departureActual = departureScheduled
 		}
-		track := stop.Track.Actual
-		out := fmt.Sprintf("%s (%s) at %s%s - %s%s", stopStationName, track, arrivalActual, arrivalDelay, departureActual, departureDelay)
-		stopsSlice = append(stopsSlice, out)
-		switch stop.DelayReasons.(type) {
-		case string:
-			delayResons = append(delayResons, stop.DelayReasons.(string))
+
+		if reason, ok := stop.DelayReasons.(string); ok {
+			s.DelayReason = reason
 		}
+
+		stops = append(stops, s)
 	}
-	return stopsSlice, delayResons
+	return stops
 }
 
 func (c iceportalClient) detectWiFi() bool {
