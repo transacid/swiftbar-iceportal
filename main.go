@@ -60,65 +60,37 @@ func newClient(local bool) iceportalClient {
 }
 
 func (c *iceportalClient) getStatus() error {
-	var body []byte
-	if c.local {
-		var err error
-		body, err = os.ReadFile("testdata/status.json")
-		if err != nil {
-			return err
-		}
-	} else {
-		req, err := http.NewRequest(http.MethodGet, iceportalStatusURL, nil)
-		if err != nil {
-			return err
-		}
-		resp, err := c.client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-	}
-
-	if err := json.Unmarshal(body, &c.status); err != nil {
+	body, err := c.fetch("testdata/status.json", iceportalStatusURL)
+	if err != nil {
 		return err
 	}
-
-	return nil
+	return json.Unmarshal(body, &c.status)
 }
 
 func (c *iceportalClient) getTrip() error {
-	var body []byte
-	if c.local {
-		var err error
-		body, err = os.ReadFile("testdata/trip.json")
-		if err != nil {
-			return err
-		}
-	} else {
-		req, err := http.NewRequest(http.MethodGet, iceportalTripURL, nil)
-		if err != nil {
-			return err
-		}
-		resp, err := c.client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-
-		body, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-	}
-	if err := json.Unmarshal(body, &c.trip); err != nil {
+	body, err := c.fetch("testdata/trip.json", iceportalTripURL)
+	if err != nil {
 		return err
 	}
-	return nil
+	return json.Unmarshal(body, &c.trip)
+}
+
+func (c *iceportalClient) fetch(localPath, url string) ([]byte, error) {
+	if c.local {
+		return os.ReadFile(localPath)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return io.ReadAll(resp.Body)
 }
 
 func (c iceportalClient) calculateArrival() string {
