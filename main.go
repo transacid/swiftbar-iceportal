@@ -150,7 +150,11 @@ func (c iceportalClient) getWifiStatus() string {
 }
 
 func (s Stop) line() string {
-	return fmt.Sprintf("%s (%s) at %s%s - %s%s", s.Name, s.Track, s.ArrivalTime, s.ArrivalDelay, s.DepartureTime, s.DepartureDelay)
+	out := fmt.Sprintf("%s (%s) at %s%s", s.Name, s.Track, s.ArrivalTime, s.ArrivalDelay)
+	if s.DepartureTime != "" {
+		out += fmt.Sprintf(" - %s%s", s.DepartureTime, s.DepartureDelay)
+	}
+	return out
 }
 
 func (c iceportalClient) getStops() []Stop {
