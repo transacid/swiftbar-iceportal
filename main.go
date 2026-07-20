@@ -105,6 +105,10 @@ func (c iceportalClient) calculateArrival() string {
 }
 
 func (c iceportalClient) outputBuilder() string {
+	if len(c.trip.Trip.Stops) == 0 {
+		return "No trip data available"
+	}
+
 	var class string
 	if c.status.WagonClass == "FIRST" {
 		class = "1st class"
@@ -118,6 +122,9 @@ func (c iceportalClient) outputBuilder() string {
 	series := fmt.Sprintf("Series %s / %s", c.status.Series, c.status.Tzn)
 	speed := fmt.Sprintf("%.0f km/h", c.status.Speed)
 	stops, delayReasons := c.getStops()
+	if len(stops) == 0 {
+		return "No trip data available"
+	}
 	nextStopString := stops[0]
 	re := regexp.MustCompile(`^(.*)(at [0-9]{2}:[0-9]{2})(\ -\ [0-9]{2}:[0-9]{2})$`)
 	sub := fmt.Sprintf("${1} in %s ${2}", c.calculateArrival())
