@@ -124,11 +124,11 @@ func (c iceportalClient) outputBuilder() string {
 	nextStop := re.ReplaceAllString(nextStopString, sub)
 	wifi := c.getWifiStatus()
 	delayReason := strings.Join(delayReasons, "\n")
-	if len(delayReason) == 0 {
-		return fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stops, "\n"), wifi)
-	} else {
-		return fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s\n**Delay Reasons:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stops, "\n"), wifi, delayReason)
+	out := fmt.Sprintf(":train.side.front.car: %s\n---\n***%s***|md=true\n%s → %s\n%s\n%s\n%s\n---\n**Next Stop:**|md=true\n%s\n---\n**Wifi:**|md=true\n%s", nextStop, trainName, startingStation, destinationStation, series, class, speed, strings.Join(stops, "\n"), wifi)
+	if delayReason != "" {
+		out += fmt.Sprintf("\n**Delay Reasons:**|md=true\n%s", delayReason)
 	}
+	return out
 }
 
 func (c iceportalClient) getWifiStatus() string {
