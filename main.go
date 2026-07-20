@@ -149,13 +149,13 @@ func (c iceportalClient) getStops() ([]string, []string) {
 	var delayResons []string
 
 	currentNextStop := c.trip.Trip.StopInfo.ActualNext
-	var stopStationName, arrivalActual, ArrivalDelay, ArrivalDelayRaw, departureActual, departureDelay, departureDelayRaw, departureScheduled, track string
 	for _, stop := range c.trip.Trip.Stops {
 		if stop.Info.Passed && stop.Info.PositionStatus != "arrived" {
 			continue
 		}
 		isCurrentStop := stop.Station.EvaNr == currentNextStop
-		stopStationName = stop.Station.Name
+		stopStationName := stop.Station.Name
+		var arrivalActual string
 		if stop.Timetable.ActualArrivalTime != nil {
 			arrivalActual = time.UnixMilli(int64(stop.Timetable.ActualArrivalTime.(float64))).Local().Format("15:04")
 		} else if stop.Timetable.ScheduledArrivalTime != nil {
@@ -171,31 +171,29 @@ func (c iceportalClient) getStops() ([]string, []string) {
 			}
 		}
 
-		ArrivalDelayRaw = stop.Timetable.ArrivalDelay
-		if ArrivalDelayRaw != "" {
-			ArrivalDelay = fmt.Sprintf(" (%s) ", stop.Timetable.ArrivalDelay)
+		var arrivalDelay string
+		arrivalDelayRaw := stop.Timetable.ArrivalDelay
+		if arrivalDelayRaw != "" {
+			arrivalDelay = fmt.Sprintf(" (%s) ", stop.Timetable.ArrivalDelay)
 		}
+		var departureActual, departureDelay string
 		if stop.Timetable.ActualDepartureTime != nil {
 			departureActual = time.UnixMilli(int64(stop.Timetable.ActualDepartureTime.(float64))).Local().Format("15:04")
-			departureDelayRaw = stop.Timetable.DepartureDelay
+			departureDelayRaw := stop.Timetable.DepartureDelay
 			if departureDelayRaw != "" {
 				departureDelay = fmt.Sprintf(" (%s) ", stop.Timetable.DepartureDelay)
 			}
 		} else if stop.Timetable.ScheduledDepartureTime != nil {
-			departureScheduled = time.UnixMilli(int64(stop.Timetable.ScheduledDepartureTime.(float64))).Local().Format("15:04")
-			departureDelayRaw = stop.Timetable.DepartureDelay
+			departureScheduled := time.UnixMilli(int64(stop.Timetable.ScheduledDepartureTime.(float64))).Local().Format("15:04")
+			departureDelayRaw := stop.Timetable.DepartureDelay
 			if departureDelayRaw != "" {
 				departureDelay = fmt.Sprintf(" (%s) ", stop.Timetable.DepartureDelay)
 			}
 			departureActual = departureScheduled
 		}
-		track = stop.Track.Actual
-		out := fmt.Sprintf("%s (%s) at %s%s - %s%s", stopStationName, track, arrivalActual, ArrivalDelay, departureActual, departureDelay)
+		track := stop.Track.Actual
+		out := fmt.Sprintf("%s (%s) at %s%s - %s%s", stopStationName, track, arrivalActual, arrivalDelay, departureActual, departureDelay)
 		stopsSlice = append(stopsSlice, out)
-		ArrivalDelayRaw = ""
-		departureDelayRaw = ""
-		ArrivalDelay = ""
-		departureDelay = ""
 		switch stop.DelayReasons.(type) {
 		case string:
 			delayResons = append(delayResons, stop.DelayReasons.(string))
