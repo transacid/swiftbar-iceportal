@@ -24,7 +24,7 @@ import (
 // <bitbar.abouturl>https://github.com/transacid/sunbar</bitbar.abouturl>
 
 // set true when testing local against files
-var local = true
+var local = false
 
 var (
 	dbWiFis            []string = []string{"WIFI@DB", "WIFIonICE"}
